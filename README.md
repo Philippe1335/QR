@@ -23,6 +23,15 @@ Au premier lancement, un restaurant de démo (**Chez Philippe**) est créé avec
 
 Variables d'environnement : `PORT`, `BASE_URL` (URL publique utilisée dans les QR codes), `PLATFORM_KEY` (clé d'onboarding, défaut `platform_key_123`), `SEED_DEMO=0` pour désactiver la démo, `DATA_DIR` (persistance JSON, défaut `./data`).
 
+### Tester le QR code avec un téléphone
+
+1. `npm start` — le serveur affiche son adresse réseau, par ex. `Sur votre réseau : http://192.168.1.42:3000`.
+2. Sur l'ordinateur, ouvre **cette adresse-là** (pas `localhost`) dans le navigateur.
+3. Clique « 📱 Scanner avec mon téléphone » : le QR code de la facture démo s'affiche à l'écran.
+4. Scanne-le avec l'appareil photo du téléphone (**même Wi-Fi** que l'ordinateur) → la page de paiement s'ouvre.
+
+Le QR encode l'adresse par laquelle la page a été ouverte : ouvert en `localhost`, il serait inutilisable depuis le téléphone (la page affiche un avertissement dans ce cas). Pour un accès hors du réseau local, utiliser un tunnel (`npx cloudflared tunnel --url http://localhost:3000` puis relancer avec `BASE_URL=https://…trycloudflare.com`) ou un vrai déploiement.
+
 ## Interface client (paiement)
 
 ```

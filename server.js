@@ -176,7 +176,7 @@ app.post('/api/checkout/:factureId/pay', (req, res) => {
 // Démo — crée une facture d'exemple et redirige vers le checkout
 // =====================================================================
 
-app.post('/api/demo/facture', (req, res) => {
+app.post('/api/demo/facture', async (req, res) => {
   const restaurant = store.getRestaurant('rest_demo');
   if (!restaurant) return res.status(404).json({ error: 'Démo désactivée' });
   const items = [
@@ -196,10 +196,25 @@ app.post('/api/demo/facture', (req, res) => {
     tax: store.round2(subtotal * 0.15),
     party_size: 3
   });
-  res.status(201).json({ facture_id: facture.id, checkout_url: checkoutUrl(req, facture) });
+  const url = checkoutUrl(req, facture);
+  res.status(201).json({
+    facture_id: facture.id,
+    checkout_url: url,
+    qr_code: await QRCode.toDataURL(url, { width: 480, margin: 2 })
+  });
 });
 
 app.listen(PORT, () => {
   console.log(`Payment + Analytics Platform démarrée sur http://localhost:${PORT}`);
   console.log(`Dashboard démo : http://localhost:${PORT}/dashboard?rest_id=rest_demo&api_key=demo_key_123`);
+  // Adresses réseau : à ouvrir depuis un téléphone sur le même Wi-Fi pour
+  // que le QR code pointe vers une adresse que le téléphone peut atteindre.
+  const nets = require('os').networkInterfaces();
+  for (const list of Object.values(nets)) {
+    for (const net of list || []) {
+      if (net.family === 'IPv4' && !net.internal) {
+        console.log(`Sur votre réseau (pour scanner le QR avec un téléphone) : http://${net.address}:${PORT}`);
+      }
+    }
+  }
 });

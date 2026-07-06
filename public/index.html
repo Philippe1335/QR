@@ -37,6 +37,12 @@
       font-weight: 600; font-size: 0.95rem; border: none; cursor: pointer; font-family: inherit;
     }
     .btn.ghost { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+    .card .btn + .btn { margin-left: 8px; }
+    #qr-zone { margin-top: 16px; text-align: center; }
+    #qr-img { width: 240px; max-width: 100%; border-radius: 10px; background: #fff; padding: 8px; }
+    .hint { color: var(--ink-2); font-size: 0.88rem; margin: 10px 0; }
+    .hint.warn { color: #b00020; font-weight: 600; }
+    @media (prefers-color-scheme: dark) { .hint.warn { color: #ff7a7a; } }
     code {
       background: color-mix(in srgb, var(--hairline) 50%, transparent);
       padding: 2px 6px; border-radius: 5px; font-size: 0.85em;
@@ -53,6 +59,12 @@
       <h2>💳 Paiement client (démo)</h2>
       <p>Crée une facture d'exemple (table 5, 3 clients) et ouvre la page que verrait un client après le scan du QR.</p>
       <button class="btn" id="demo-btn">Créer une facture démo →</button>
+      <button class="btn ghost" id="qr-btn">📱 Scanner avec mon téléphone</button>
+      <div id="qr-zone" hidden>
+        <p id="qr-hint" class="hint"></p>
+        <img id="qr-img" alt="QR code de la facture démo">
+        <p class="hint" id="qr-url"></p>
+      </div>
     </div>
 
     <div class="card">
@@ -74,11 +86,33 @@
     </div>
   </main>
   <script>
-    document.getElementById('demo-btn').addEventListener('click', async () => {
+    async function createDemoFacture() {
       const res = await fetch('/api/demo/facture', { method: 'POST' });
       const data = await res.json();
-      if (res.ok) location.href = data.checkout_url;
-      else alert(data.error || 'Erreur');
+      if (!res.ok) throw new Error(data.error || 'Erreur');
+      return data;
+    }
+
+    document.getElementById('demo-btn').addEventListener('click', async () => {
+      try { location.href = (await createDemoFacture()).checkout_url; }
+      catch (err) { alert(err.message); }
+    });
+
+    // Affiche le QR à l'écran pour le scanner avec un téléphone.
+    document.getElementById('qr-btn').addEventListener('click', async () => {
+      try {
+        const data = await createDemoFacture();
+        const zone = document.getElementById('qr-zone');
+        const hint = document.getElementById('qr-hint');
+        document.getElementById('qr-img').src = data.qr_code;
+        document.getElementById('qr-url').textContent = data.checkout_url;
+        const local = ['localhost', '127.0.0.1'].includes(location.hostname);
+        hint.textContent = local
+          ? '⚠️ Cette page est ouverte en localhost : ton téléphone ne pourra pas ouvrir ce QR. Ouvre plutôt cette page via l\'adresse réseau affichée au démarrage du serveur (http://192.168.x.x:3000), puis re-clique ici.'
+          : 'Scanne avec l\'appareil photo de ton téléphone (même Wi-Fi que cet ordinateur).';
+        hint.classList.toggle('warn', local);
+        zone.hidden = false;
+      } catch (err) { alert(err.message); }
     });
   </script>
 </body>
