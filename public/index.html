@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
+  <title>Payment + Analytics Platform</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --surface: #fcfcfb; --card: #ffffff; --ink: #0b0b0b; --ink-2: #52514e;
+      --muted: #898781; --hairline: #e1e0d9; --accent: #2a78d6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --surface: #0d0d0d; --card: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7;
+        --hairline: #2c2c2a; --accent: #3987e5;
+      }
+    }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--surface); color: var(--ink);
+      min-height: 100vh; padding: 40px 20px;
+    }
+    main { max-width: 640px; margin: 0 auto; }
+    h1 { font-size: 1.8rem; margin-bottom: 6px; }
+    .sub { color: var(--ink-2); margin-bottom: 28px; font-size: 1.05rem; }
+    .card {
+      background: var(--card); border: 1px solid var(--hairline);
+      border-radius: 14px; padding: 22px; margin-bottom: 16px;
+    }
+    .card h2 { font-size: 1.05rem; margin-bottom: 4px; }
+    .card p { color: var(--ink-2); font-size: 0.92rem; margin-bottom: 14px; }
+    .btn {
+      display: inline-block; padding: 12px 20px; border-radius: 10px;
+      background: var(--accent); color: #fff; text-decoration: none;
+      font-weight: 600; font-size: 0.95rem; border: none; cursor: pointer; font-family: inherit;
+    }
+    .btn.ghost { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+    code {
+      background: color-mix(in srgb, var(--hairline) 50%, transparent);
+      padding: 2px 6px; border-radius: 5px; font-size: 0.85em;
+    }
+    ul { margin: 8px 0 0 20px; color: var(--ink-2); font-size: 0.9rem; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Payment + Analytics Platform</h1>
+    <p class="sub">Le client scanne, paie — et le restaurant reçoit les insights. Intégration POS en 3 endpoints.</p>
+
+    <div class="card">
+      <h2>💳 Paiement client (démo)</h2>
+      <p>Crée une facture d'exemple (table 5, 3 clients) et ouvre la page que verrait un client après le scan du QR.</p>
+      <button class="btn" id="demo-btn">Créer une facture démo →</button>
+    </div>
+
+    <div class="card">
+      <h2>📊 Dashboard analytics (démo)</h2>
+      <p>60 jours de paiements simulés : top plats, heures de pointe, tendances, alertes.</p>
+      <a class="btn ghost" href="/dashboard?rest_id=rest_demo&api_key=demo_key_123">Ouvrir le dashboard →</a>
+    </div>
+
+    <div class="card">
+      <h2>🔌 API pour le POS</h2>
+      <p>Authentification par clé API (header <code>X-API-Key</code>). Démo : <code>rest_demo</code> / <code>demo_key_123</code>.</p>
+      <ul>
+        <li><code>POST /api/v1/factures</code> — créer une facture → checkout_url + QR code</li>
+        <li><code>GET /api/v1/factures/:id</code> — statut (paid / pending), montants, tip</li>
+        <li><code>DELETE /api/v1/factures/:id</code> — annuler</li>
+        <li><code>GET /api/v1/analytics?rest_id=…&period=week</code> — tous les insights en JSON</li>
+        <li>Webhook <code>payment.completed</code> envoyé au POS après chaque paiement</li>
+      </ul>
+    </div>
+  </main>
+  <script>
+    document.getElementById('demo-btn').addEventListener('click', async () => {
+      const res = await fetch('/api/demo/facture', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) location.href = data.checkout_url;
+      else alert(data.error || 'Erreur');
+    });
+  </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 {
-  "name": "qr-restaurant-pay",
+  "name": "restaurant-payment-analytics",
   "version": "1.0.0",
-  "description": "Paiement de facture au restaurant par QR code (Apple Pay via Stripe) avec partage de l'addition",
+  "description": "Payment + Analytics Platform pour POS de restaurants : paiement par QR code + dashboard d'insights alimenté par les données de paiement",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "express": "^4.19.2",
-    "qrcode": "^1.5.3",
-    "stripe": "^16.0.0"
+    "qrcode": "^1.5.3"
   }
 }

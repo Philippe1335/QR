@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
+  <title>Dashboard Analytics</title>
+  <link rel="stylesheet" href="/dashboard.css">
+</head>
+<body>
+  <div class="viz-root">
+    <header class="topbar">
+      <div>
+        <h1 id="resto-name">Dashboard</h1>
+        <p class="subtitle" id="period-label">Analytics de paiement</p>
+      </div>
+      <nav class="filters" id="filters" aria-label="Période">
+        <button class="filter-btn" data-period="today">Aujourd'hui</button>
+        <button class="filter-btn active" data-period="week">7 jours</button>
+        <button class="filter-btn" data-period="month">30 jours</button>
+        <button class="filter-btn" data-period="quarter">90 jours</button>
+      </nav>
+    </header>
+
+    <main id="main">
+      <div class="loading" id="loading">Chargement des insights…</div>
+
+      <div id="content" hidden>
+        <!-- 1. Overview -->
+        <section class="kpi-row" id="kpi-row"></section>
+
+        <div class="grid">
+          <!-- 2. Top items -->
+          <section class="card span-2">
+            <h2>Top plats</h2>
+            <p class="card-sub">Les 10 items les plus vendus sur la période</p>
+            <div id="top-items-chart" class="chart"></div>
+            <div class="table-wrap">
+              <table id="top-items-table">
+                <thead>
+                  <tr><th>Item</th><th class="num">Quantité</th><th class="num">Revenue</th><th class="num">Trend</th><th class="num">% du total</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- 3. Peak hours -->
+          <section class="card span-2">
+            <h2>Heures de pointe</h2>
+            <p class="insight" id="hours-insight"></p>
+            <div id="hours-chart" class="chart"></div>
+            <div class="table-wrap">
+              <table id="hours-table">
+                <thead>
+                  <tr><th>Heure</th><th class="num">Transactions</th><th class="num">Ticket moyen</th><th class="num">Tip %</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- 4. Peak days -->
+          <section class="card">
+            <h2>Jours importants</h2>
+            <p class="insight" id="days-insight"></p>
+            <div id="days-chart" class="chart"></div>
+          </section>
+
+          <!-- 7. Categories -->
+          <section class="card">
+            <h2>Revenue par catégorie</h2>
+            <p class="card-sub">Répartition des ventes</p>
+            <div class="donut-layout">
+              <div id="category-chart" class="chart donut"></div>
+              <div id="category-legend" class="cat-legend"></div>
+            </div>
+          </section>
+
+          <!-- 5. Item trends -->
+          <section class="card span-2">
+            <h2>Tendances (30 derniers jours)</h2>
+            <p class="card-sub">Comparé aux 30 jours précédents</p>
+            <div class="trends-grid">
+              <div>
+                <h3 class="trend-head up">En hausse</h3>
+                <ul id="gainers" class="trend-list"></ul>
+              </div>
+              <div>
+                <h3 class="trend-head down">En baisse</h3>
+                <ul id="losers" class="trend-list"></ul>
+              </div>
+              <div>
+                <h3 class="trend-head">Alertes</h3>
+                <ul id="alerts" class="trend-list alerts"></ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- 6. Customer metrics -->
+          <section class="card span-2">
+            <h2>Clients</h2>
+            <p class="card-sub">Comportement de paiement sur la période</p>
+            <div class="mini-kpis" id="customer-kpis"></div>
+          </section>
+        </div>
+      </div>
+
+      <div id="error" class="loading" hidden></div>
+    </main>
+  </div>
+  <div id="tooltip" class="tooltip" hidden></div>
+  <script src="/dashboard.js"></script>
+</body>
+</html>
