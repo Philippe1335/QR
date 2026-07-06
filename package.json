@@ -1,0 +1,18 @@
+{
+  "name": "qr-restaurant-pay",
+  "version": "1.0.0",
+  "description": "Paiement de facture au restaurant par QR code (Apple Pay via Stripe) avec partage de l'addition",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "qrcode": "^1.5.3",
+    "stripe": "^16.0.0"
+  }
+}

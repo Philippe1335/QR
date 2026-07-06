@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Votre addition</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site">
+      <h1>🍽️ Votre addition</h1>
+      <div class="sub" id="table-label"></div>
+    </header>
+
+    <div class="card" id="bill-card">
+      <h2>Détail de la commande</h2>
+      <table class="bill"><tbody id="bill-items"></tbody></table>
+      <div class="totals">
+        <div class="row grand"><span>Total</span><span id="total"></span></div>
+        <div class="row paid" id="paid-row" style="display:none"><span>Déjà payé</span><span id="paid"></span></div>
+        <div class="row" id="remaining-row" style="display:none"><span>Restant à payer</span><span id="remaining"></span></div>
+      </div>
+      <div class="payments-list" id="payments-list"></div>
+    </div>
+
+    <div class="card" id="split-card">
+      <h2>Partager l'addition</h2>
+      <div class="split-grid">
+        <button data-n="1">Seul</button>
+        <button data-n="2">÷ 2</button>
+        <button data-n="3">÷ 3</button>
+        <button data-n="4">÷ 4</button>
+      </div>
+      <div class="split-hint" id="split-hint"></div>
+    </div>
+
+    <div class="card" id="pay-card">
+      <h2>Paiement</h2>
+      <div class="share-amount">
+        <div class="label" id="share-label">À payer maintenant</div>
+        <div class="value" id="share-amount"></div>
+      </div>
+      <div id="payment-request-button"></div>
+      <div id="card-fallback" style="display:none">
+        <div id="card-element"></div>
+        <button class="btn primary" id="card-pay-btn">Payer par carte</button>
+      </div>
+      <button class="btn apple" id="demo-pay-btn" style="display:none"> Payer avec Apple Pay (démo)</button>
+      <div class="demo-note" id="demo-note" style="display:none">
+        Mode démonstration — aucun paiement réel n'est effectué.
+      </div>
+      <div class="error-msg" id="error-msg"></div>
+    </div>
+
+    <div class="card settled" id="settled-card" style="display:none">
+      <div class="check">✅</div>
+      <h2>Addition réglée</h2>
+      <p>Merci et à bientôt !</p>
+    </div>
+  </div>
+
+  <script src="/table.js"></script>
+</body>
+</html>

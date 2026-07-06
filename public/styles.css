@@ -1,0 +1,205 @@
+:root {
+  --bg: #f6f4ef;
+  --card: #ffffff;
+  --ink: #1f2937;
+  --muted: #6b7280;
+  --accent: #0f766e;
+  --accent-ink: #ffffff;
+  --line: #e5e7eb;
+  --success: #15803d;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+}
+
+header.site {
+  text-align: center;
+  padding: 18px 0 8px;
+}
+
+header.site h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+}
+
+header.site .sub {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-top: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.card h2 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+
+table.bill {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+table.bill td {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+table.bill td.qty { color: var(--muted); width: 2.4em; }
+table.bill td.price { text-align: right; white-space: nowrap; }
+
+.totals { margin-top: 12px; font-size: 0.95rem; }
+.totals .row { display: flex; justify-content: space-between; padding: 4px 0; }
+.totals .row.grand { font-weight: 700; font-size: 1.15rem; padding-top: 8px; }
+.totals .row.paid { color: var(--success); }
+.totals .row.muted { color: var(--muted); }
+
+.split-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.split-grid button {
+  padding: 12px 0;
+  border-radius: 10px;
+  border: 1.5px solid var(--line);
+  background: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.split-grid button.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.split-hint { color: var(--muted); font-size: 0.85rem; margin-top: 10px; }
+
+.share-amount {
+  text-align: center;
+  margin: 6px 0 14px;
+}
+
+.share-amount .label { color: var(--muted); font-size: 0.85rem; }
+.share-amount .value { font-size: 1.9rem; font-weight: 700; }
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.apple {
+  background: #000;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn + .btn, #payment-request-button + .btn { margin-top: 10px; }
+
+.badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: var(--success);
+}
+
+.settled {
+  text-align: center;
+  padding: 26px 10px;
+}
+
+.settled .check { font-size: 3rem; }
+.settled h2 { margin: 8px 0 4px; }
+.settled p { color: var(--muted); margin: 0; }
+
+.error-msg {
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 12px;
+  font-size: 0.9rem;
+  display: none;
+}
+
+.payments-list { font-size: 0.85rem; color: var(--muted); margin-top: 10px; }
+.payments-list div { padding: 2px 0; }
+
+#card-element {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 12px 0;
+  background: #fff;
+}
+
+.demo-note {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* Page admin */
+.tables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.table-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+
+.table-card img { width: 100%; max-width: 220px; border-radius: 8px; }
+.table-card h3 { margin: 6px 0 2px; }
+.table-card .amount { color: var(--muted); font-size: 0.9rem; }
+.table-card a.open { display: inline-block; margin-top: 8px; color: var(--accent); font-weight: 600; }
+
+@media print {
+  .no-print { display: none; }
+  body { background: #fff; }
+}
