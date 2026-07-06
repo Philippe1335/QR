@@ -1,107 +1,106 @@
 # 🍽️ QR Restaurant Pay
 
-Application web permettant aux clients d'un restaurant de **scanner un QR code
-posé sur leur table**, de **consulter leur addition** et de **payer via
-Apple Pay** (ou carte bancaire), avec la possibilité de **partager l'addition
-en 2, 3 ou 4**.
+Application web de **paiement de factures au restaurant via QR code sur table**,
+avec **division de l'addition par client**.
 
-## Fonctionnement
+Deux interfaces complètement séparées, qui partagent les mêmes données
+(localStorage, synchronisées entre onglets) :
 
-1. Le restaurateur ouvre la page d'accueil (`/`), qui affiche un **QR code par
-   table**, prêt à imprimer.
-2. Le client scanne le QR code de sa table → il arrive sur `/table/<n°>` et
-   voit le **détail de sa commande et le total**.
-3. Il choisit éventuellement de **diviser l'addition** (÷2, ÷3, ÷4) : chaque
-   convive paie sa part depuis son propre téléphone (la page se met à jour en
-   temps réel au fur et à mesure des paiements, et le dernier payeur règle
-   exactement le solde pour gérer les arrondis).
-4. Il paie via **Apple Pay** (bouton natif Stripe) ou par **carte bancaire**.
-5. Quand toutes les parts sont réglées, la page affiche « Addition réglée » ✅.
+| Interface | URL | Pour qui |
+|---|---|---|
+| 📱 **Client** | `/pay?table=N` (via scan du QR code) | Les clients, sur mobile |
+| 👨‍🍳 **Resto** | `/admin` | Le personnel, sur desktop/tablette |
 
-## Démarrage rapide (mode démo)
+## Démarrage rapide
 
 ```bash
 npm install
-npm start
+npm run dev
 ```
 
-Puis ouvrez <http://localhost:3000>. Sans clés Stripe, l'application tourne en
-**mode démo** : le bouton « Payer avec Apple Pay (démo) » simule le paiement,
-ce qui permet de tester tout le parcours (QR code, facture, partage, parts
-payées) sans compte Stripe.
+Puis ouvrez <http://localhost:5173>.
 
-Trois tables d'exemple sont pré-remplies (les données vivent dans
-`data/bills.json` — supprimez ce fichier pour réinitialiser la démo).
+**Pour tester le flow complet** : ouvrez `/admin` dans un onglet et
+`/pay?table=1` dans un autre. Faites un paiement côté client → la table se
+met à jour en direct côté resto (synchro via l'événement `storage`).
 
-## Activer les paiements réels (Apple Pay via Stripe)
+## Interface client (`/pay`)
 
-Apple Pay sur le web passe par un prestataire de paiement ; cette application
-utilise **Stripe** et son bouton *Payment Request*, qui affiche automatiquement
-Apple Pay sur Safari/iPhone (et Google Pay sur Android).
+1. Le client scanne le QR code de sa table (l'URL contient `?table=N`), ou
+   entre son numéro de table à la main.
+2. Il voit la **facture complète** : items par client, sous-total,
+   TPS (5 %) + TVQ (9,975 %), total.
+3. Il choisit **« Tout ensemble »** ou **« Diviser la facture »** :
+   il coche les clients qui paient ensemble (ex. : Client 1 + Client 2),
+   et voit « Vous payez X $ sur Y $ au total ».
+4. **Paiement simulé** (façon Stripe test mode) : nom + carte de test
+   `4242 4242 4242 4242`. Toute autre carte est refusée, aucune somme réelle
+   n'est débitée.
+5. Après paiement : ✓ confirmation, et les items payés **disparaissent** de la
+   facture. Les autres convives paient le reste depuis leur propre téléphone.
 
-1. Créez un compte sur [stripe.com](https://stripe.com) et récupérez vos clés.
-2. Lancez l'application avec vos clés :
+## Interface resto (`/admin`)
 
-   ```bash
-   STRIPE_SECRET_KEY=sk_live_... \
-   STRIPE_PUBLISHABLE_KEY=pk_live_... \
-   BASE_URL=https://votre-domaine.fr \
-   npm start
-   ```
+- **Grille des 20 tables** avec statut (🟢 ACTIVE / ⬜ VIDE / ⚫ FERMÉE),
+  montant total, reste à payer et nombre de clients.
+- **Gérer une table** (`/admin/table/N`) :
+  - ajouter un item du menu (quantité + assignation à Client 1, 2, …
+    ou « Non assigné / partagé ») ;
+  - régler le nombre de clients à table ;
+  - voir la **facture en temps réel** groupée par client, retirer un item ;
+  - voir les **paiements reçus** (qui a payé quoi, à quelle heure) ;
+  - **Marquer comme payée / Libérer la table** → la table redevient VIDE ;
+  - QR code de la table avec lien direct vers la page client.
+- **QR codes** (`/admin/qr`) : les 20 QR codes prêts à imprimer
+  (bouton Imprimer, mise en page print dédiée).
 
-3. **Apple Pay exige HTTPS et un domaine vérifié** :
-   - Dans le dashboard Stripe → *Settings → Payment methods → Apple Pay*,
-     ajoutez votre domaine.
-   - Stripe fournit un fichier `apple-developer-merchantid-domain-association` ;
-     placez-le dans `public/.well-known/` (le serveur le sert déjà sur
-     `/.well-known/...`).
-   - Servez l'application en HTTPS (par exemple derrière un reverse proxy
-     Nginx/Caddy, ou via un hébergeur type Render/Railway/Fly.io).
+## Données de démo
 
-Pour tester en local avec les clés de **test** Stripe (`sk_test_`/`pk_test_`),
-le paiement par carte fonctionne directement (carte `4242 4242 4242 4242`) ;
-Apple Pay, lui, ne s'affiche que sur HTTPS avec domaine vérifié.
+- 20 tables pré-créées, menu de 16 items (poutine, burger, pizza, bière, vin,
+  café, desserts…).
+- Tables **1, 3, 8 et 12** ont des factures actives pour tester
+  (la table 3 est une table de 4, idéale pour tester le split).
+- Tout est persisté dans **localStorage** : un rechargement conserve l'état.
+  Le bouton **« Réinitialiser la démo »** (ou la suppression de la clé
+  `qr-resto-v2`) restaure les données d'exemple.
 
-### Variables d'environnement
+## Stack technique
 
-| Variable | Rôle | Défaut |
-|---|---|---|
-| `STRIPE_SECRET_KEY` | Clé secrète Stripe (absente → mode démo) | — |
-| `STRIPE_PUBLISHABLE_KEY` | Clé publiable Stripe (frontend) | — |
-| `BASE_URL` | URL publique encodée dans les QR codes | déduite de la requête |
-| `CURRENCY` | Devise des paiements | `eur` |
-| `PORT` | Port d'écoute | `3000` |
+- **React 18 + Vite** — SPA, aucune dépendance serveur
+- **React Router** — routes `/`, `/pay`, `/admin`, `/admin/table/:id`, `/admin/qr`
+- **qrcode.react** — génération des QR codes (SVG)
+- **CSS simple** mobile-first (pas de framework)
+- **Store maison** (`src/store.js`) : `useSyncExternalStore` + localStorage +
+  événement `storage` pour la synchro temps réel entre onglets
 
-## Architecture
+## Structure des fichiers
 
 ```
-server.js            Serveur Express : pages, QR codes, API, Stripe
-lib/store.js         Factures (données de démo, partage, paiements, persistance JSON)
-public/admin.html    Page restaurateur : QR codes par table, à imprimer
-public/table.html    Page client : facture, partage, paiement
-public/table.js      Logique client (Stripe Payment Request / Apple Pay, mode démo)
-public/styles.css    Styles
-data/bills.json      Données persistées (créé au premier lancement)
+src/
+  main.jsx                        Point d'entrée
+  App.jsx                         Routes
+  store.js                        Store partagé (localStorage) + helpers (taxes, statuts…)
+  styles.css                      Styles (mobile-first + print)
+  data/mockData.js                Menu + 20 tables + factures d'exemple
+  pages/
+    Home.jsx                      Accueil : choix client / resto
+    ClientPayment.jsx             Flow client : facture → split → paiement → ✓
+    RestaurantDashboard.jsx       Grille des tables
+    TableManage.jsx               Gestion d'une table (items, clients, paiements)
+    QRCodesPage.jsx               QR codes à imprimer
+  components/
+    TableCard.jsx                 Carte de table (dashboard)
+    FactureDisplay.jsx            Facture groupée par client + taxes
+    SplitSelector.jsx             Cases à cocher « qui paie ensemble »
+    PaymentForm.jsx               Formulaire de paiement simulé (Stripe test)
 ```
-
-### API
-
-| Méthode | Route | Description |
-|---|---|---|
-| `GET` | `/api/tables` | Liste des tables et l'état de leur addition |
-| `GET` | `/api/table/:id/bill` | Facture d'une table |
-| `POST` | `/api/table/:id/split` | Définit le partage (`{"splitCount": 1‑4}`) |
-| `POST` | `/api/table/:id/payment-intent` | Crée le paiement Stripe de la prochaine part |
-| `POST` | `/api/table/:id/confirm` | Vérifie le paiement côté serveur et l'enregistre |
-| `POST` | `/api/table/:id/confirm-demo` | Paiement simulé (mode démo uniquement) |
-| `GET` | `/qr/:id.png` | QR code de la table (PNG) |
 
 ## Limites connues (pistes d'évolution)
 
-- Les additions sont des données de démonstration : en production, brancher
-  `lib/store.js` sur la caisse (POS) du restaurant.
-- Le partage est en parts égales ; un partage « par article » serait une
-  évolution naturelle.
-- Stockage JSON sur disque : à remplacer par une base de données pour un
-  déploiement multi-instances, et ajouter un webhook Stripe pour fiabiliser
-  la confirmation des paiements.
+- **Paiements simulés** : brancher le vrai Stripe (Payment Element / Apple Pay)
+  en remplaçant `PaymentForm.jsx`.
+- **Pas d'authentification** sur `/admin` — à ajouter avant toute mise en prod.
+- **localStorage** : la synchro ne fonctionne qu'entre onglets du même
+  navigateur. Pour un vrai multi-appareils, remplacer `src/store.js` par une
+  petite API (les composants n'ont pas besoin de changer).
+- **Pas d'intégration POS** : le menu et les factures sont des données mock.

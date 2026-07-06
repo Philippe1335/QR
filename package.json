@@ -1,18 +1,25 @@
 {
   "name": "qr-restaurant-pay",
-  "version": "1.0.0",
-  "description": "Paiement de facture au restaurant par QR code (Apple Pay via Stripe) avec partage de l'addition",
-  "main": "server.js",
+  "version": "2.0.0",
+  "description": "Paiement de facture au restaurant par QR code sur table — interface client (mobile) + interface resto (gestion des tables)",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "qrcode": "^1.5.3",
-    "stripe": "^16.0.0"
+    "qrcode.react": "^4.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
   }
 }
