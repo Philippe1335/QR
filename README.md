@@ -1,134 +1,96 @@
-# Payment + Analytics Platform
+# Payment + Service + Analytics Platform
 
-Plateforme 2-en-1 à intégrer dans les systèmes POS de restaurants :
+Plateforme 3-en-1 qui s'ajoute par-dessus le POS existant d'un restaurant :
 
-1. **Payment layer** — le client scanne un QR code sur sa table et paie directement (tout ensemble ou divisé par client, avec pourboire).
-2. **Analytics** — chaque paiement est collecté automatiquement et alimente un dashboard d'insights : meilleurs plats, heures de pointe, tendances, alertes.
+1. **Service** — le client scanne le QR de sa table → consulte le menu, appelle le serveur, paie.
+2. **Payment** — paiement direct par QR avec split flexible (tout / également / par item) + pourboire.
+3. **Analytics** — paiements, demandes serveur et feedbacks alimentent automatiquement un dashboard d'insights.
 
-Le POS reçoit les paiements (webhook) **et** les insights.
+Le POS continue de gérer les commandes normalement ; le menu est en lecture seule pour le client.
 
 ## Démarrage
 
 ```bash
 npm install
-npm start
-# → http://localhost:3000
+npm start       # → http://localhost:3000
 ```
 
-Au premier lancement, un restaurant de démo (**Chez Philippe**) est créé avec 60 jours de paiements simulés :
+Le frontend compilé (`dist/`) est inclus dans le repo — `npm run build` n'est nécessaire qu'après avoir modifié `src/`.
 
-- Page d'accueil + démo : `http://localhost:3000/`
-- Dashboard : `http://localhost:3000/dashboard?rest_id=rest_demo&api_key=demo_key_123`
-- Checkout client : bouton « Créer une facture démo » sur la page d'accueil
+Au premier lancement, le restaurant démo **Chez Philippe** est créé : 60 jours de transactions, ~350 demandes serveur, ~300 feedbacks, factures actives sur les tables 3, 5, 8 et 12, et 5 demandes en attente sur la tablette.
 
-Variables d'environnement : `PORT`, `BASE_URL` (URL publique utilisée dans les QR codes), `PLATFORM_KEY` (clé d'onboarding, défaut `platform_key_123`), `SEED_DEMO=0` pour désactiver la démo, `DATA_DIR` (persistance JSON, défaut `./data`).
+| Interface | URL |
+|---|---|
+| Accueil démo (+ QR à scanner) | `http://localhost:3000/` |
+| Écran client d'une table | `/table?rest_id=rest_demo&table_id=5` |
+| Tablette serveur | `/server-view?rest_id=rest_demo` |
+| Dashboard analytics | `/dashboard?rest_id=rest_demo&api_key=demo_key_123` |
 
-### Tester le QR code avec un téléphone
+En dev : `npm run dev:server` (API sur :3000) + `npm run dev` (Vite sur :5173 avec proxy `/api`).
 
-1. `npm start` — le serveur affiche son adresse réseau, par ex. `Sur votre réseau : http://192.168.1.42:3000`.
-2. Sur l'ordinateur, ouvre **cette adresse-là** (pas `localhost`) dans le navigateur.
-3. Clique « 📱 Scanner avec mon téléphone » : le QR code de la facture démo s'affiche à l'écran.
-4. Scanne-le avec l'appareil photo du téléphone (**même Wi-Fi** que l'ordinateur) → la page de paiement s'ouvre.
+### Tester le flow complet
 
-Le QR encode l'adresse par laquelle la page a été ouverte : ouvert en `localhost`, il serait inutilisable depuis le téléphone (la page affiche un avertissement dans ce cas). Pour un accès hors du réseau local, utiliser un tunnel (`npx cloudflared tunnel --url http://localhost:3000` puis relancer avec `BASE_URL=https://…trycloudflare.com`) ou un vrai déploiement.
+1. Ouvre `/table?rest_id=rest_demo&table_id=5` → 3 options.
+2. Consulte le menu complet (onglets par catégorie), reviens.
+3. « Appeler le serveur » → « De l'eau » → « ✓ Le serveur a été averti ».
+4. Dans un autre onglet, ouvre `/server-view?rest_id=rest_demo` → la demande apparaît (polling 3 s, son activable) → « Traité ».
+5. Retour sur `/table` → « Payer la facture » → teste les 3 modes de split.
+6. Paie (simulé — Stripe test 4242 4242 4242 4242) → feedback 2 questions (étoiles, puis avis Google ou « quoi améliorer »).
+7. Ouvre `/dashboard?rest_id=rest_demo&api_key=demo_key_123` → les métriques incluent ton paiement, ta demande et ton feedback.
 
-## Interface client (paiement)
+### Tester le QR avec un téléphone
 
-```
-GET /checkout?rest_id=REST_ID&table_id=TABLE_ID&facture_id=FACTURE_ID
-```
+`npm start` affiche l'adresse réseau (`http://192.168.x.x:3000`). Ouvre **cette adresse** sur l'ordinateur, clique « 📱 Scanner avec mon téléphone », scanne le QR (même Wi-Fi). Le QR encode `/table?rest_id=…&table_id=…`. Pour un accès hors réseau local : tunnel (`npx cloudflared tunnel --url http://localhost:3000` + `BASE_URL=…`) ou déploiement.
 
-Flux : scan du QR → facture complète → « Payer tout ensemble » ou « Diviser par client » (cases à cocher par client, taxe au prorata) → pourboire (0/10/15/20 %) → paiement Apple Pay / carte **simulé** → « ✓ Paiement reçu ». Mobile-first, gros boutons. Le premier chargement de la page enregistre l'heure de scan (métrique scan → paiement).
+## Interface client (`/table`)
 
-## Dashboard analytics
+Écran d'accueil à 3 options, mobile-first, gros boutons :
 
-```
-GET /dashboard?rest_id=REST_ID&api_key=KEY
-```
+- **📋 Voir le menu complet** — 22 items en 4 catégories (photos emoji placeholder, descriptions, prix). Lecture seule.
+- **🔔 Appeler le serveur** — 5 demandes en un tap : 🍽️ prêt à commander, 💧 eau, 🧂 condiments, 🙋 assistance, 🧾 addition. Confirmation « ✓ Le serveur a été averti ».
+- **💳 Payer la facture** — facture complète, puis split : **payer tout**, **diviser également** (÷ X personnes) ou **diviser par item** (cases par client, taxe au prorata) ; pourboire 15/18/20 %/autre ; paiement simulé Apple Pay/carte ; puis **feedback 2 questions** : note 1-5 ★, et selon la note → lien avis Google (4-5★) ou « quoi améliorer » (1-3★ : service lent / erreur commande / qualité / autre + commentaire).
 
-Périodes : aujourd'hui / 7 / 30 / 90 jours. Sections :
+## Tablette serveur (`/server-view`)
 
-1. **Overview** — revenue, transactions, ticket moyen, tips (avec delta vs période précédente + sparkline)
-2. **Top items** — top 10 plats : graphique + tableau (quantité, revenue, trend ↑↓, % du total)
-3. **Peak hours** — courbe transactions/heure + tableau (ticket moyen, tip %) + insight auto (« 19h-21h = 34 % des ventes »)
-4. **Peak days** — barres lundi→dimanche + insight auto (« Vendredi/Samedi = 46 % de ta semaine »)
-5. **Item trends** — 30 jours : top gainers, top losers, alertes (« ⚠️ Steak Frites n'a pas été commandé depuis 5 jours »)
-6. **Customer metrics** — ticket moyen, tips moyens (% et $), taille de groupe, temps moyen scan → paiement
-7. **Category breakdown** — donut du revenue par catégorie
+Demandes en direct, polling 3 s : urgences en premier (🙋 assistance, 🧾 addition — cartes rouges), demandes normales en jaune, traitées en gris (visibles 2 min). Bouton **« Traité »** (optimiste), horodatage vivant (« il y a 30 s »), bip sonore activable pour les nouvelles demandes.
 
-## API pour le POS
+## Dashboard analytics (`/dashboard`)
 
-Authentification : header `X-API-Key` (ou `Authorization: Bearer`, ou `?api_key=`).
+Périodes : aujourd'hui / 7 / 30 / 90 jours. 6 widgets :
 
-### Onboarding d'un restaurant
+1. **Overview** — revenue, transactions, ticket moyen, tips (deltas vs période précédente) + **score de satisfaction**.
+2. **Top items** — top 10 : barres + tableau (qté, revenue, trend ↑↓, % du total).
+3. **Peak hours / days** — courbe par heure + barres lundi→dimanche, avec insights auto.
+4. **Demandes serveur** — répartition par type (%), volume, temps de réponse moyen du staff, demandes en attente.
+5. **Feedback client** — score moyen, distribution 5★→1★, % d'avis Google, commentaires négatifs récents.
+6. **Split de facture** — % tout ensemble / divisé également / par item, taille de groupe, temps scan → paiement.
 
-```
-POST /api/v1/restaurants           (header X-Platform-Key)
-{ "name": "Mon Resto", "webhook_url": "https://pos.example.com/hook" }
-→ { restaurant_id, api_key, dashboard_url }
-```
+## API
 
-### 1. Créer une facture
+Clé API du restaurant : header `X-API-Key`, `Authorization: Bearer` ou `?api_key=`. Les endpoints côté client (menu, demandes, checkout, feedback) sont publics — connaître l'URL de sa table sert de capacité d'accès.
 
-```
-POST /api/v1/factures
-{
-  "restaurant_id": "rest_123",
-  "table_id": "5",
-  "items": [{ "name": "Burger", "price": 12.0, "qty": 1, "client_id": "1", "category": "Plats" }],
-  "tax": 4.05,
-  "party_size": 4
-}
-→ { facture_id, checkout_url, qr_code }   (qr_code = data URL PNG ; aussi GET /api/v1/factures/:id/qr.png)
-```
+| Endpoint | Rôle |
+|---|---|
+| `GET /api/v1/menu?rest_id=X` | Menu complet (catégories, items, prix) |
+| `POST /api/v1/server-request` | `{restaurant_id, table_id, request_type: water\|condiments\|assistance\|ready_to_order\|bill}` |
+| `PATCH /api/v1/server-request/:id` | `{status: "handled"}` |
+| `GET /api/v1/server-requests?rest_id=X` | Demandes en attente + traitées < 2 min (polling tablette) |
+| `POST /api/v1/restaurants` | Onboarding (header `X-Platform-Key`) → `{restaurant_id, api_key, dashboard_url}` |
+| `POST /api/v1/factures` 🔑 | Créer une facture → `{facture_id, checkout_url, qr_code}` |
+| `GET /api/v1/factures/:id` 🔑 | Statut : paid / pending / partial / cancelled, montants, tip |
+| `DELETE /api/v1/factures/:id` 🔑 | Annuler |
+| `POST /api/v1/payment` | `{facture_id, split_type: full\|equal\|by_item, amount, tip, method}` |
+| `POST /api/v1/feedback` | `{facture_id, rating: 1-5, comment, issue_type, google_review}` |
+| `GET /api/v1/analytics?rest_id=X&period=week` 🔑 | Toutes les métriques du dashboard en JSON |
+| Webhook `payment.completed` | POSTé au POS après paiement complet (3 tentatives, backoff) |
 
-`subtotal` et `total` sont calculés automatiquement s'ils ne sont pas fournis.
+Payload du webhook : `{event, facture_id, restaurant_id, table_id, amount_paid, tip, payment_method, timestamp_scan, timestamp_payment, time_to_pay_minutes, party_size, items[]}`.
 
-### 2. Vérifier le statut
+## Stack & structure
 
-```
-GET /api/v1/factures/:id
-→ { facture_id, status: "paid" | "pending" | "partial" | "cancelled", amount_total, amount_paid, tip }
-```
+- **Frontend** : React 18 (Vite), React Router, TailwindCSS 4, Recharts — `src/pages` (TableHome, MenuView, CallServer, Checkout, Feedback, ServerView, Dashboard), `src/components` (SplitSelector, RequestCard, MenuCategory, RatingStars, Charts/…).
+- **Backend** : Express + persistance JSON (`data/db.json`) — `server.js`, `lib/` (store, analytics, seed, menu, webhook). Un backend léger remplace le localStorage du MVP pour que téléphone, tablette et dashboard partagent les mêmes données en temps réel (le localStorage n'est pas partagé entre appareils).
+- **Temps réel** : polling 3 s (pas de WebSocket nécessaire pour le MVP). Pas d'auth réelle côté client.
+- **Paiement simulé** : brancher un PaymentIntent Stripe confirmé côté serveur dans `processPayment` (`server.js`) pour la production.
 
-### 3. Annuler
-
-```
-DELETE /api/v1/factures/:id
-```
-
-### 4. Webhook après paiement complet
-
-```
-POST https://[POS_WEBHOOK_URL]
-{
-  "event": "payment.completed",
-  "facture_id": "fac_abc123",
-  "restaurant_id": "rest_123",
-  "table_id": "5",
-  "amount_paid": 40.25,
-  "tip": 5.00,
-  "payment_method": "apple_pay",
-  "timestamp_scan": "2024-01-15T19:20:00Z",
-  "timestamp_payment": "2024-01-15T19:28:00Z",
-  "time_to_pay_minutes": 8,
-  "party_size": 4,
-  "items": [{ "name": "Burger", "price": 12.00, "qty": 1, "category": "Plats" }]
-}
-```
-
-3 tentatives avec backoff (0s, 2s, 4s), timeout 10s.
-
-### 5. Analytics en JSON
-
-```
-GET /api/v1/analytics?rest_id=REST_ID&period=week   (today | week | month | quarter)
-```
-
-Retourne toutes les sections du dashboard (overview, top_items, peak_hours, peak_days, item_trends, customer_metrics, category_breakdown) — le POS peut donc afficher les insights dans sa propre interface.
-
-## Notes d'implémentation
-
-- **Paiement simulé** : `POST /api/checkout/:id/pay` enregistre le paiement directement. En production, brancher un PaymentIntent Stripe confirmé côté serveur à cet endroit (`server.js`).
-- **Stockage** : en mémoire + persistance JSON (`data/db.json`). À remplacer par une vraie base de données en production.
-- Stack : Node.js ≥ 18, Express, `qrcode`. Frontend en HTML/CSS/JS vanilla, sans framework ni CDN.
+Variables d'environnement : `PORT`, `BASE_URL`, `PLATFORM_KEY`, `SEED_DEMO=0`, `DATA_DIR`.

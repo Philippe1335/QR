@@ -1,11 +1,13 @@
 {
   "name": "restaurant-payment-analytics",
-  "version": "1.0.0",
-  "description": "Payment + Analytics Platform pour POS de restaurants : paiement par QR code + dashboard d'insights alimenté par les données de paiement",
+  "version": "2.0.0",
+  "description": "Payment + Service + Analytics Platform pour POS de restaurants : menu, appel serveur, paiement par QR avec split flexible, feedback client et dashboard d'insights",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "build": "vite build",
+    "dev": "vite",
+    "dev:server": "node --watch server.js"
   },
   "engines": {
     "node": ">=18"
@@ -13,5 +15,15 @@
   "dependencies": {
     "express": "^4.19.2",
     "qrcode": "^1.5.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-router-dom": "^6.26.0",
+    "recharts": "^2.12.0",
+    "tailwindcss": "^4.0.0",
+    "vite": "^5.4.0"
   }
 }
